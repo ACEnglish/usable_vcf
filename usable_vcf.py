@@ -6,6 +6,7 @@ import os
 import sys
 import logging
 import argparse
+import tempfile
 
 import pysam
 import vcf
@@ -16,7 +17,9 @@ def pcmd_exe(cmd):
     """
     Wraps a cmd_exe with set -o pipefail
     """
-    return cmd_exe("set -o pipefail; " + cmd)
+    out = tempfile.NamedTemporaryFile(mode='w')
+    out.write("set -o pipefail; " + cmd)
+    return cmd_exe(f"bash {out.name}")
 
 def parse_args(args):
     parser = argparse.ArgumentParser(prog="usable_vcf", description=__doc__,
@@ -25,7 +28,7 @@ def parse_args(args):
                         help="vcf to parse")
     parser.add_argument("-v", "--verbose", action="store_true",
                         help="Output errors returned by commands/libraries")
-    parser.add_argument("-m", "--max-entries", default=10000,
+    parser.add_argument("-m", "--max-entries", default=1000,
                         help="Maximum number of entries to parse (%(default)s)")
     return parser.parse_args(args)
 
@@ -47,9 +50,10 @@ def main(args):
 
     failures = 0
     tests = 0
-    ret = pcmd_exe("bcftools query -f '%s' %s | head -n%d" % (fstr, vfn, args.max_entries))
+    ret = pcmd_exe("bcftools query -f '%s\n' %s | head -n%d" % (fstr, vfn, args.max_entries))
     tests += 1
-    if ret.ret_code != 0 or ret.stderr != b"":
+    # 141 is from the 'head'
+    if (ret.ret_code != 0 and ret.ret_code != 141) or ret.stderr != b"":
         logging.error("===== bcftools query failed =====")
         logging.debug(ret.stderr.decode())
         failures += 1
@@ -58,12 +62,13 @@ def main(args):
     # Need a way to generate/check regions (maybe multiple of them)...
     ret = pcmd_exe("bcftools view %s | head -n%d" % (vfn, args.max_entries))
     tests += 1
-    if ret.ret_code != 0 or ret.stderr != b"":
+    if (ret.ret_code != 0 and ret.ret_code != 141) or ret.stderr != b"":
         logging.error("===== bcftools view failed =====")
         logging.debug(ret.stderr.decode())
         failures += 1
 
-    ret = pcmd_exe("vcf-validator -u -d %s" % (vfn))
+    # no need to pipe here
+    ret = cmd_exe("zcat %s | head -n%d | vcf-validator -d" % (vfn, args.max_entries))
     tests += 1
     if ret.ret_code != 0 or ret.stdout != "":
         logging.error("===== vcf-validator failed =====")
