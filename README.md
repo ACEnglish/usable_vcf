@@ -5,14 +5,12 @@ Requirements
 
 The following programs need to be in your PATH
 
-- bcftools
-- vcftools
-- tabix
+- bcftools / htlib (http://www.htslib.org/download/)
+- vcftools (https://vcftools.github.io/index.html)
 
 The following libraries need to be installed in your python environment
 
-- pip install pysam
-- pip install pyvcf
+- pip install pysam pyvcf
 
 How to run
 ==========
@@ -39,5 +37,5 @@ a VCF would work with. Passing all of these checks requires strict adherence to 
 This project is in beta. Please add tickets or pull-requests if you'd like to see other tools and use-cases added
 to the suite of those currently checked. 
 
-If you believe a VCF is incorrecly failing a test, please add a ticket. Our checks may be invalid or we may have
+If you believe a VCF is incorrectly failing a test, please add a ticket. Our checks may be invalid or we may have
 an interesting discussion on how to interpret the VCF specification.
