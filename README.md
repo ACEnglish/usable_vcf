@@ -10,7 +10,7 @@ The following programs need to be in your PATH
 
 The following libraries need to be installed in your python environment
 
-- pip install pysam pyvcf
+- pip install pysam pyvcf acebinf
 
 How to run
 ==========
