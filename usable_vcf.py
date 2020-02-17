@@ -19,7 +19,7 @@ def pcmd_exe(cmd):
     """
     out = tempfile.NamedTemporaryFile(mode='w')
     out.write("set -o pipefail; " + cmd)
-    return cmd_exe(f"bash {out.name}")
+    return cmd_exe("bash " + out.name)
 
 def parse_args(args):
     parser = argparse.ArgumentParser(prog="usable_vcf", description=__doc__,
@@ -28,7 +28,7 @@ def parse_args(args):
                         help="vcf to parse")
     parser.add_argument("-v", "--verbose", action="store_true",
                         help="Output errors returned by commands/libraries")
-    parser.add_argument("-m", "--max-entries", default=1000,
+    parser.add_argument("-m", "--max-entries", default=100,
                         help="Maximum number of entries to parse (%(default)s)")
     return parser.parse_args(args)
 
@@ -48,6 +48,9 @@ def main(args):
     all_formats = [x for x in v.header.formats]
     fstr = " ".join(["%INFO/" + x for x in all_infos]) + " [" + " ".join([ "%" + x for x in all_formats]) + "]"
 
+    # header doesn't count as entries
+    args.max_entries += str(v.header).count('\n')
+    
     failures = 0
     tests = 0
     ret = pcmd_exe("bcftools query -f '%s\n' %s | head -n%d" % (fstr, vfn, args.max_entries))
@@ -67,7 +70,7 @@ def main(args):
         logging.debug(ret.stderr.decode())
         failures += 1
 
-    # no need to pipe here
+    # no need to pipefail here
     ret = cmd_exe("zcat %s | head -n%d | vcf-validator -d" % (vfn, args.max_entries))
     tests += 1
     if ret.ret_code != 0 or ret.stdout != "":
