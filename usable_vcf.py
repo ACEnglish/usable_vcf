@@ -74,10 +74,10 @@ def cmd_exe(cmd, timeout=-1):
     except Alarm:
         os.killpg(proc.pid, signal.SIGTERM)
         proc.kill()
-    	t_end = time.time()
+        t_end = time.time()
         stdoutVal, stderrVal = proc.communicate()
-    	stdoutVal = bytes.decode(stdoutVal)
-    	ret = cmd_result(214, stdoutVal, stderrVal, datetime.timedelta(seconds=int(t_end - t_start)))
+        stdoutVal = bytes.decode(stdoutVal)
+        ret = cmd_result(214, stdoutVal, stderrVal, datetime.timedelta(seconds=int(t_end - t_start)))
         return ret
     t_end = time.time()
 
